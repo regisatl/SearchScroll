@@ -766,3 +766,461 @@ Route::post('/applicants/update-status/{applicant}', [ApplicantsController::clas
 ```
 
 Avec ces modifications, vous devriez avoir une page qui affiche les applicants de manière paginée avec des fonctionnalités de filtrage et de mise à jour du statut en utilisant Laravel et Inertia. Assurez-vous d'ajuster le code en fonction de vos besoins spécifiques et d'inclure les composants et les dépendances nécessaires.
+
+Pour mettre en place la recherche et le filtrage en fonction des noms, des prénoms et d'autres informations dans le champ de type input, vous pouvez suivre ces étapes en utilisant le code que vous avez fourni :
+
+1. Mettez à jour le script `ApplicantsDashboard.vue` :
+
+```vue
+<script setup>
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ApplicantsTableVue from '@/Components/ApplicantsTable.vue';
+import { Head } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+
+const props = defineProps(['applicants']);
+
+// Champ de filtre pour la recherche
+const searchValue = ref('');
+
+let filteredApplicants = ref(props.applicants);
+
+// Fonction pour filtrer les applicants
+function filterApplicants() {
+  filteredApplicants.value = props.applicants.filter((applicant) =>
+    applicant.first_name.toLowerCase().includes(searchValue.value.toLowerCase()) ||
+    applicant.last_name.toLowerCase().includes(searchValue.value.toLowerCase()) ||
+    applicant.email.toLowerCase().includes(searchValue.value.toLowerCase())
+  );
+}
+
+watch(searchValue, () => {
+  filterApplicants();
+});
+</script>
+```
+
+2. Mettez à jour le template `ApplicantsDashboard.vue` pour inclure le champ de recherche :
+
+```vue
+<template>
+  <!-- ... Votre code existant ... -->
+  <div class="flex justify-between items-center">
+    <div class="mt-5 mb-5">
+      <form class="flex">
+        <input v-model="searchValue" type="text" placeholder="Search..." class="mr-4 w-full max-w-md me-4 rounded-lg">
+        <button type="button" class="bg-amber-500 py-2 px-5 rounded-lg shadow-sm text-white hover:bg-amber-400" @click="filterApplicants">Filtrer</button>
+      </form>
+    </div>
+  </div>
+  <!-- ... Votre code existant ... -->
+</template>
+```
+
+3. Assurez-vous que vous avez une copie locale de la liste des applicants filtrés dans le script `ApplicantsTable.vue` :
+
+```vue
+<script setup>
+import { Link } from '@inertiajs/vue3';
+
+defineProps(['applicantList']);
+const localApplicantList = ref(applicantList);
+</script>
+```
+
+4. Mettez à jour le template `ApplicantsTable.vue` pour utiliser la copie locale de la liste filtrée :
+
+```vue
+<template>
+  <tr class="hover:bg-amber-100" v-for="applicant in localApplicantList" :key="applicant.id" :applicant="applicant">
+    <!-- ... Colonnes du tableau ... -->
+  </tr>
+
+  <tr v-if="localApplicantList.length === 0">
+    <td class="px-2 py-4 border-t text-lg" colspan="4">No applicants found.</td>
+  </tr>
+</template>
+```
+
+Cela devrait vous permettre d'effectuer une recherche ou un filtrage en fonction des noms, des prénoms, ou de l'email des applicants en utilisant un champ de type input dans la vue `ApplicantsDashboard.vue`. Les résultats filtrés seront affichés dans la table en temps réel lorsque vous tapez dans le champ de recherche et cliquez sur le bouton "Filtrer".
+
+Pour mettre en place le filtrage dans votre vue `ApplicantsDashboard.vue` en utilisant Inertia, vous pouvez suivre ces étapes :
+
+1. **Créez le composant ApplicantsTable.vue** : Assurez-vous que vous avez déjà créé un composant `ApplicantsTable.vue` pour afficher le tableau des candidats.
+
+2. **Affichez le tableau des candidats dans ApplicantsTable.vue** : Dans le composant `ApplicantsTable.vue`, vous pouvez utiliser les données fournies par Inertia pour afficher le tableau des candidats. Voici comment vous pouvez afficher le tableau avec les informations de chaque candidat :
+
+```vue
+<template>
+    <div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Email</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="applicant in applicants.data" :key="applicant.id">
+                    <td>{{ applicant.first_name }}</td>
+                    <td>{{ applicant.last_name }}</td>
+                    <td>{{ applicant.email }}</td>
+                    <td>{{ applicant.status }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <!-- Pagination ici -->
+    </div>
+</template>
+
+<script>
+export default {
+    props: {
+        applicants: Object, // Les données des candidats fournies par Inertia
+    },
+};
+</script>
+```
+
+3. **Ajoutez des champs de filtrage dans ApplicantsDashboard.vue** : Dans la vue `ApplicantsDashboard.vue`, vous pouvez ajouter des champs de filtrage pour permettre à l'utilisateur de filtrer les candidats par nom, prénom et statut. Par exemple :
+
+```vue
+<template>
+    <div>
+        <input v-model="search" placeholder="Rechercher par nom, prénom ou email">
+        <select v-model="status" @change="filterApplicants" placeholder="Filtrer par statut">
+            <option value="">Tous les statuts</option>
+            <option value="en_attente">En attente</option>
+            <option value="accepte">Accepté</option>
+            <option value="refuse">Refusé</option>
+        </select>
+
+        <!-- Afficher le composant ApplicantsTable.vue -->
+        <applicants-table :applicants="applicants" />
+
+    </div>
+</template>
+
+<script>
+import { ref } from 'vue';
+
+export default {
+    props: {
+        applicants: Object, // Les données des candidats fournies par Inertia
+    },
+    setup() {
+        const search = ref('');
+        const status = ref('');
+
+        const filterApplicants = () => {
+            // Envoyer une demande à Laravel pour appliquer les filtres
+            // Utilisez axios ou la méthode Inertia.post() pour envoyer la demande
+            // Mettez à jour les données des candidats en fonction de la réponse
+        };
+
+        return {
+            search,
+            status,
+            filterApplicants,
+        };
+    },
+};
+</script>
+```
+
+4. **Ajoutez la logique de filtrage** : Dans la fonction `filterApplicants`, vous devez envoyer une demande à Laravel pour appliquer les filtres en fonction des valeurs de `search` et `status`. Vous pouvez utiliser Axios ou la méthode `Inertia.post()` pour cela. Voici un exemple d'utilisation d'Axios :
+
+```javascript
+import axios from 'axios';
+
+const filterApplicants = async () => {
+    const response = await axios.get(`/applicants`, {
+        params: {
+            search: search.value,
+            status: status.value,
+        },
+    });
+    applicants = response.data; // Mettez à jour les données des candidats avec la réponse
+};
+```
+
+5. **Gérez la pagination** : Vous pouvez également gérer la pagination en utilisant les données de pagination fournies par Laravel dans la réponse. Assurez-vous de mettre à jour la pagination lorsque vous filtrez les candidats.
+
+6. **Ajoutez des événements de mise à jour** : Pour que les filtres fonctionnent en temps réel, ajoutez des événements `@input` sur les champs de filtrage pour déclencher la fonction `filterApplicants` lorsque les valeurs changent.
+
+Cela devrait vous permettre de mettre en place un système de filtrage des candidats dans votre application Inertia avec Laravel. N'oubliez pas de personnaliser le code en fonction de vos besoins spécifiques et de la manière dont vous souhaitez gérer les demandes de filtrage côté serveur.
+
+
+Bien sûr, voici le code complet pour la vue `ApplicantsDashboard.vue`, y compris le reste de la logique pour envoyer une demande à Laravel pour appliquer les filtres et mettre à jour les données des candidats :
+
+```vue
+<template>
+    <div>
+        <input v-model="search" placeholder="Rechercher par nom, prénom ou email">
+        <select v-model="status" @change="filterApplicants" placeholder="Filtrer par statut">
+            <option value="">Tous les statuts</option>
+            <option value="en_attente">En attente</option>
+            <option value="accepte">Accepté</option>
+            <option value="refuse">Refusé</option>
+        </select>
+
+        <!-- Afficher le composant ApplicantsTable.vue -->
+        <applicants-table :applicants="applicants" />
+
+    </div>
+</template>
+
+<script>
+import { ref } from 'vue';
+import axios from 'axios'; // Importez Axios pour effectuer des requêtes HTTP
+
+export default {
+    props: {
+        applicants: Object, // Les données des candidats fournies par Inertia
+    },
+    setup() {
+        const search = ref('');
+        const status = ref('');
+
+        const filterApplicants = async () => {
+            try {
+                const response = await axios.get(`/applicants`, {
+                    params: {
+                        search: search.value,
+                        status: status.value,
+                    },
+                });
+                applicants = response.data; // Mettez à jour les données des candidats avec la réponse
+            } catch (error) {
+                console.error('Une erreur s\'est produite lors de la récupération des candidats filtrés :', error);
+            }
+        };
+
+        return {
+            search,
+            status,
+            filterApplicants,
+        };
+    },
+};
+</script>
+```
+
+Assurez-vous d'importer Axios dans votre fichier Vue pour pouvoir effectuer des requêtes HTTP vers votre backend Laravel. Ce code utilise une requête GET pour envoyer les paramètres de filtrage (recherche et statut) au serveur et récupère les données filtrées en réponse. Ensuite, il met à jour la variable `applicants` avec les données filtrées. En cas d'erreur, il affiche un message d'erreur dans la console.
+
+
+Bien sûr ! Voici un exemple de code Laravel avec Inertia.js qui permet de filtrer des données affichées dans un tableau en fonction de la valeur entrée par un utilisateur. Dans cet exemple, nous supposerons que vous avez déjà configuré Inertia.js dans votre application Laravel.
+
+1. Tout d'abord, créez un contrôleur pour gérer la logique de filtrage. Vous pouvez utiliser la commande artisan pour générer un contrôleur :
+
+```bash
+php artisan make:controller DataFilterController
+```
+
+2. Dans le contrôleur nouvellement créé (app/Http/Controllers/DataFilterController.php), ajoutez une méthode qui effectue le filtrage en fonction de la valeur entrée par l'utilisateur :
+
+```php
+use App\Models\YourModel; // Remplacez YourModel par le nom de votre modèle
+
+public function filter(Request $request)
+{
+    $filterValue = $request->input('filter'); // Supposons que vous utilisez un champ de formulaire nommé "filter"
+
+    // Vous pouvez personnaliser cette requête en fonction de votre modèle et de votre logique de filtrage
+    $filteredData = YourModel::where('column_name', 'like', '%' . $filterValue . '%')->get();
+
+    // Passer les données filtrées à la vue
+    return Inertia::render('YourComponent', [
+        'filteredData' => $filteredData,
+    ]);
+}
+```
+
+3. Créez une route dans le fichier routes/web.php pour gérer la requête du formulaire et appeler la méthode de filtrage du contrôleur :
+
+```php
+use App\Http\Controllers\DataFilterController;
+
+Route::post('/filter-data', [DataFilterController::class, 'filter'])->name('filter.data');
+```
+
+4. Dans votre composant Inertia.js (resources/js/Pages/YourComponent.vue), créez un formulaire pour permettre à l'utilisateur de saisir la valeur de filtrage et envoyez-la à la route que nous venons de définir :
+
+```html
+<template>
+  <div>
+    <form @submit.prevent="filterData">
+      <input v-model="filterValue" type="text" placeholder="Entrez une valeur de filtrage" />
+      <button type="submit">Filtrer</button>
+    </form>
+
+    <table>
+      <thead>
+        <!-- En-têtes de colonnes -->
+      </thead>
+      <tbody>
+        <tr v-for="item in filteredData" :key="item.id">
+          <!-- Afficher les données filtrées dans le tableau -->
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<script>
+import { ref } from 'vue';
+import { Inertia } from '@inertiajs/inertia';
+
+export default {
+  data() {
+    return {
+      filterValue: '',
+    };
+  },
+  props: {
+    filteredData: Array, // Recevez les données filtrées depuis le contrôleur
+  },
+  methods: {
+    filterData() {
+      Inertia.post(route('filter.data'), {
+        filter: this.filterValue,
+      });
+    },
+  },
+};
+</script>
+```
+
+5. Assurez-vous d'ajuster le contenu du tableau et les en-têtes de colonnes en fonction de votre modèle de données réel.
+
+Avec ces étapes, vous devriez avoir un formulaire de filtrage qui envoie la valeur entrée par l'utilisateur à votre contrôleur Laravel, où les données sont filtrées et renvoyées à votre composant Inertia.js pour affichage dans le tableau. Assurez-vous de personnaliser cela en fonction de vos besoins spécifiques.
+
+Pour créer un système de filtrage de données en utilisant Laravel et Inertia.js, vous pouvez suivre ces étapes. Je vais supposer que vous avez déjà installé Laravel et configuré Inertia dans votre projet. Voici un exemple simple pour vous montrer comment faire un filtrage de données à l'aide de Laravel, Inertia et Vue.js.
+
+1. Créez un modèle Eloquent pour les données que vous souhaitez filtrer. Par exemple, supposons que vous avez un modèle `Product` :
+
+```bash
+php artisan make:model Product
+```
+
+2. Définissez les routes dans le fichier `routes/web.php` pour gérer l'affichage initial et le filtrage des données :
+
+```php
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', 'ProductController@index');
+Route::post('/filter', 'ProductController@filter');
+```
+
+3. Créez un contrôleur `ProductController` avec les méthodes `index` pour afficher la page et `filter` pour gérer le filtrage :
+
+```bash
+php artisan make:controller ProductController
+```
+
+Dans le contrôleur `ProductController`, vous pouvez implémenter les méthodes suivantes :
+
+```php
+use App\Models\Product;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+public function index()
+{
+    $products = Product::all();
+    return Inertia::render('Products/Index', ['products' => $products]);
+}
+
+public function filter(Request $request)
+{
+    $filter = $request->input('filter');
+    $products = Product::where('name', 'like', "%$filter%")
+                        ->orWhere('description', 'like', "%$filter%")
+                        ->get();
+
+    return Inertia::render('Products/Index', ['products' => $products, 'filter' => $filter]);
+}
+```
+
+4. Créez une vue Inertia pour afficher les données et le formulaire de filtrage. Par exemple, créez un fichier `Index.vue` dans le répertoire `resources/js/Pages/Products` :
+
+```vue
+<template>
+  <div>
+    <input type="text" v-model="filter" @input="applyFilter" placeholder="Rechercher...">
+    <table>
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="product in products" :key="product.id">
+          <td>{{ product.name }}</td>
+          <td>{{ product.description }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<script>
+export default {
+  props: ['products', 'filter'],
+  data() {
+    return {
+      filter: this.filter || '',
+    };
+  },
+  methods: {
+    applyFilter() {
+      this.$inertia.post('/filter', { filter: this.filter });
+    },
+  },
+};
+</script>
+```
+
+5. Enregistrez la vue Inertia dans votre fichier de route `resources/js/app.js` :
+
+```javascript
+import { createApp, h } from 'vue';
+import { App as InertiaApp, plugin as InertiaPlugin } from '@inertiajs/inertia-vue3';
+import { InertiaProgress } from '@inertiajs/progress';
+
+const el = document.getElementById('app');
+
+createApp({
+  render: () =>
+    h(InertiaApp, {
+      initialPage: JSON.parse(el.dataset.page),
+      resolveComponent: (name) => require(`./Pages/${name}`).default,
+    }),
+})
+  .mixin({ methods: { route } })
+  .use(InertiaPlugin)
+  .mount(el);
+
+InertiaProgress.init({ color: '#4B5563' });
+```
+
+6. Affichez les données en utilisant la directive `<inertia>` dans votre vue Blade. Par exemple, créez un fichier Blade `resources/views/products/index.blade.php` :
+
+```php
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- ... Vos balises d'en-tête ... -->
+</head>
+<body>
+    <div id="app" data-page="{{ json_encode($page) }}"></div>
+</body>
+</html>
+```
+
+7. Lancez votre application Laravel en utilisant la commande `php artisan serve` et accédez à la page d'accueil pour voir les données affichées et le formulaire de filtrage.
+
+Cela vous permettra de créer un système de filtrage de données en utilisant Laravel, Inertia.js et Vue.js. Vous pouvez personnaliser le code en fonction de vos besoins spécifiques.

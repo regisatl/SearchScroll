@@ -1224,3 +1224,100 @@ InertiaProgress.init({ color: '#4B5563' });
 7. Lancez votre application Laravel en utilisant la commande `php artisan serve` et accédez à la page d'accueil pour voir les données affichées et le formulaire de filtrage.
 
 Cela vous permettra de créer un système de filtrage de données en utilisant Laravel, Inertia.js et Vue.js. Vous pouvez personnaliser le code en fonction de vos besoins spécifiques.
+
+```javascript
+
+<script setup>
+
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ApplicantsTableVue from '@/Components/ApplicantsTable.vue';
+import { Head } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+
+const props = defineProps(['applicants']);
+
+// Champ de filtre pour la recherche
+const searchValue = ref('');
+const status = ref('');
+
+//  Le tableau sur lequel on effectue le filtrage
+let filteredApplicants = ref(props.applicants);
+
+
+// Fonction pour filtrer les applicants
+function filterApplicants() {
+      filteredApplicants.value = props.applicants.filter((applicant) =>
+            applicant.first_name.toLowerCase().includes(searchValue.value.toLowerCase()) ||
+            applicant.last_name.toLowerCase().includes(searchValue.value.toLowerCase()) ||
+            applicant.email.toLowerCase().includes(searchValue.value.toLowerCase()) || 
+            applicant.statut.toLowerCase().includes(status.value.toLowerCase()) 
+      );
+};
+
+watch(searchValue, () => {
+      filterApplicants();
+});
+
+
+</script>
+```
+
+```php
+<template>
+
+      <Head title="Dashboard" />
+      <AuthenticatedLayout>
+            <template #header>
+                  <h1 class="mb-3 text-3xl font-bold text-gray-500">Postulants</h1>
+            </template>
+            <div class="py-12">
+                  <div class="max-w-8xl mx-auto sm:px-6 lg:px-8">
+                        <div class="flex justify-between items-center">
+                              <div class="mt-5 mb-5">
+                                    <form class="">
+                                          <div class="flex justify-end">
+                                                <input v-model="searchValue" type="text" placeholder="Search..." class="mt-1 block w-full px-3 py-2 bg-white border border-amber-300 text-sm shadow-sm placeholder-slate-400
+                                                            focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500
+                                                            disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none
+                                                            invalid:border-pink-500 invalid:text-pink-600
+                                                            focus:invalid:border-pink-500 focus:invalid:ring-pink-500">
+                                                <select v-model="statut" @change="filterApplicants"
+                                                      placeholder="Filtrer par statut" class="form-select mt-1 w-full focus:border-amber-500 focus:ring-1 focus:ring-amber-500 border border-amber-300">
+                                                      <option value="">All</option>
+                                                      <option value="en_attente">En attente</option>
+                                                      <option value="ok">Ok</option>
+                                                      <option value="nok">Nok</option>
+                                                      <option value="out">Out</option>
+                                                </select>
+                                          </div>
+                                    </form>
+                              </div>
+                        </div>
+                        <div class="bg-white rounded-md shadow overflow-x-auto">
+                              <table class="w-full whitespace-nowrap table-auto">
+                                    <thead>
+                                          <tr class="text-left font-bold bg-amber-500 text-white">
+                                                <th class="pb-3 pt-3 px-3">ID</th>
+                                                <th class="pb-3 pt-3 px-3">Civilité</th>
+                                                <th class="pb-3 pt-3 px-3">Nom</th>
+                                                <th class="pb-3 pt-3 px-3">Prénoms</th>
+                                                <th class="pb-3 pt-3 px-3">Nationalité</th>
+                                                <th class="pb-3 pt-3 px-3">Pièce</th>
+                                                <th class="pb-3 pt-3 px-3">Téléphone</th>
+                                                <th class="pb-3 pt-3 px-3">Email</th>
+                                                <th class="pb-3 pt-3 px-3">Ville</th>
+                                                <th class="pb-3 pt-3 px-3">Status</th>
+                                                <th class="pb-3 pt-3 px-3"></th>
+                                          </tr>
+                                    </thead>
+                                    <tbody>
+                                          <ApplicantsTableVue :filteredApplicants="filteredApplicants" />
+                                    </tbody>
+                              </table>
+                        </div>
+                  </div>
+            </div>
+      </AuthenticatedLayout>
+</template>
+```
+

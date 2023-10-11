@@ -1223,4 +1223,4 @@ InertiaProgress.init({ color: '#4B5563' });
 
 7. Lancez votre application Laravel en utilisant la commande `php artisan serve` et accédez à la page d'accueil pour voir les données affichées et le formulaire de filtrage.
 
-Cela vous permettra de créer un système de filtrage de données en utilisant Laravel, Inertia.js et Vue.js. Vous pouvez personnaliser le code en fonction de vos besoins spécifiques.
+Cela vous permettra de créer un système de filtrage de données en utilisant Laravel, Inertia.js et Vue.js. Vous pouvez personnaliser le code en fonction de vos besoins spécifiques.j

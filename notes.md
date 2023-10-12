@@ -1224,3 +1224,260 @@ InertiaProgress.init({ color: '#4B5563' });
 7. Lancez votre application Laravel en utilisant la commande `php artisan serve` et accédez à la page d'accueil pour voir les données affichées et le formulaire de filtrage.
 
 Cela vous permettra de créer un système de filtrage de données en utilisant Laravel, Inertia.js et Vue.js. Vous pouvez personnaliser le code en fonction de vos besoins spécifiques.
+
+
+Pour améliorer le filtrage des données dans votre application et gérer la pagination avec un scroll infini, voici une approche professionnelle basée sur vos exigences. Nous allons également optimiser la gestion des filtres, ainsi que le chargement des données à mesure que l'utilisateur fait défiler la page.
+
+ApplicantsController.php :
+
+```php
+namespace App\Http\Controllers;
+
+use App\Models\Applicant;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+class ApplicantsController extends Controller
+{
+    public function index()
+    {
+        return Inertia::render('ApplicationDashboard');
+    }
+
+    public function getAll(Request $request)
+    {
+        $query = Applicant::query();
+
+        // Filtrage par statut
+        if ($request->has('status')) {
+            $query->where('statut', $request->status);
+        }
+
+        // Filtrage par civilité
+        if ($request->has('civility')) {
+            $query->where('civility', $request->civility);
+        }
+
+        // Requête de pagination
+        $applicants = $query->paginate(env('PER_PAGE', 10));
+
+        return response()->json($applicants);
+    }
+}
+```
+
+ApplicationDashboard.vue :
+
+```vue
+<script setup>
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ApplicantsTableVue from '@/Components/ApplicantsTable.vue';
+import { Head } from '@inertiajs/vue3';
+import { ref, onMounted } from 'vue';
+
+const searchValue = ref('');
+const status = ref('');
+const civilite = ref('');
+const filteredApplicants = ref([]);
+const isLoading = ref(false);
+let currentPage = ref(1);
+let totalPages = ref(1);
+
+// Fonction pour charger les données
+async function fetchData() {
+    isLoading.value = true;
+    const response = await window.axios.get('/api/applicants', {
+        params: {
+            page: currentPage.value,
+            status: status.value,
+            civility: civilite.value,
+            search: searchValue.value,
+        },
+    });
+    const data = response.data;
+    totalPages.value = data.last_page;
+    currentPage.value = data.current_page;
+    if (currentPage.value === 1) {
+        filteredApplicants.value = data.data;
+    } else {
+        filteredApplicants.value.push(...data.data);
+    }
+    isLoading.value = false;
+}
+
+// Fonction pour réinitialiser les filtres
+function reset() {
+    status.value = '';
+    civilite.value = '';
+    searchValue.value = '';
+    currentPage.value = 1;
+    filteredApplicants.value = [];
+    fetchData();
+}
+
+onMounted(() => {
+    fetchData();
+
+    // Écoute du scroll infini
+    window.addEventListener('scroll', loadMore);
+});
+
+async function loadMore() {
+    if (isLoading.value || currentPage.value >= totalPages.value) return;
+    const scrollY = window.scrollY;
+    const innerHeight = window.innerHeight;
+    const scrollHeight = document.documentElement.scrollHeight;
+
+    if (scrollY + innerHeight >= scrollHeight - 300) {
+        currentPage.value++;
+        await fetchData();
+    }
+}
+</script>
+
+<template>
+    <!-- Votre code de template ici -->
+</template>
+```
+
+Assurez-vous de mettre en place les routes et les composants nécessaires pour prendre en charge ces modifications. Cette mise à jour permettra de filtrer et de paginer les données de manière plus efficace tout en prenant en charge le scroll infini pour charger plus de données lorsque l'utilisateur fait défiler la page vers le bas.
+
+
+
+Je vois que vous avez un composant Vue.js appelé "RatingTests" qui gère l'ajout de notes et le calcul de la moyenne. Vous avez également un contrôleur Laravel "TestController" pour gérer l'affichage de ce composant. Pour enregistrer les données du formulaire dans une table nommée "assessment", vous devrez effectuer quelques modifications. Voici comment vous pouvez réorganiser le code de "RatingTests.vue" pour atteindre vos objectifs :
+
+```vue
+<template>
+  <Layout>
+    <h1 class="bg-amber-400 py-4 text-center text-2xl font-semibold">Test Collectif</h1>
+    <div class="p-8 -mr-6 -mb-8">
+      <form @submit.prevent="submitForm">
+        <fieldset>
+          <!-- ... Vos sections de notes -->
+
+          <div>
+            <InputLabel>Moyenne:</InputLabel>
+            <TextInput type="text" class="pr-6 pb-8 w-full lg:w-1/2 mb-5" :value="moyenne" placeholder="0" />
+          </div>
+          <div>
+            <InputLabel>Statut:</InputLabel>
+            <TextInput type="text" class="pr-6 pb-8 w-full lg:w-1/2 mb-5" :value="status" />
+          </div>
+          <div>
+            <InputLabel>Session:</InputLabel>
+            <select v-model="selectedSession" class="rounded-lg border-slate-400 pr-6 pb-8 w-full lg:w-1/2 mb-5">
+              <option value="">Sélectionnez une session</option>
+              <option value="26-04-2023">26-04-2023</option>
+              <option value="11-03-2023">11-03-2023</option>
+            </select>
+          </div>
+          <br>
+          <button type="submit" class="bg-amber-400 hover:bg-amber-500 px-5 py-3 rounded-lg text-slate-100 mb-6">Sauvegarder</button>
+        </fieldset>
+      </form>
+    </div>
+  </Layout>
+</template>
+
+<script>
+import { ref } from 'vue';
+import { Head, useForm, Link } from '@inertiajs/vue3';
+import Layout from '@/Shared/Layout.vue';
+
+export default {
+  setup() {
+    const test1 = ref('');
+    const test2 = ref('');
+    const test3 = ref('');
+    const test4 = ref('');
+    const test5 = ref('');
+    const moyenne = ref(0);
+    const status = ref('');
+    const selectedSession = ref('');
+
+    const funcTestValue1 = () => {
+      // Calcul de la moyenne
+      const tests = [test1, test2, test3, test4, test5];
+      const totalTests = tests.reduce((acc, test) => (test.value ? acc + parseFloat(test.value) : acc), 0);
+      moyenne.value = totalTests / tests.length;
+
+      // Définir le statut
+      if (moyenne.value >= 15) {
+        status.value = 'Ok';
+      } else {
+        status.value = 'OUT';
+      }
+    };
+
+    const submitForm = () => {
+      // Vous pouvez envoyer les données du formulaire au backend ici
+      const formData = {
+        test1: test1.value,
+        test2: test2.value,
+        test3: test3.value,
+        test4: test4.value,
+        test5: test5.value,
+        moyenne: moyenne.value,
+        status: status.value,
+        selectedSession: selectedSession.value,
+      };
+      
+      // Envoyez formData au backend (API Laravel) pour enregistrement
+    };
+
+    return {
+      test1,
+      test2,
+      test3,
+      test4,
+      test5,
+      moyenne,
+      status,
+      selectedSession,
+      funcTestValue1,
+      submitForm,
+    };
+  },
+};
+</script>
+```
+
+Maintenant, vous avez un formulaire qui calcule automatiquement la moyenne et détermine le statut (Ok ou OUT) en fonction de la moyenne. Une fois le formulaire soumis, les données sont prêtes à être envoyées au backend.
+
+Pour la partie backend (Laravel), vous devrez créer une route et une méthode de contrôleur pour traiter les données du formulaire et les enregistrer dans la table "assessment". Vous pouvez utiliser Eloquent pour gérer la base de données. Voici un exemple de route et de méthode de contrôleur :
+
+```php
+// web.php
+Route::post('/save-assessment', 'AssessmentController@store');
+
+// AssessmentController.php
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Assessment;
+
+class AssessmentController extends Controller
+{
+    public function store(Request $request)
+    {
+        // Valider les données du formulaire ici si nécessaire
+        $data = $request->all();
+
+        // Enregistrez les données dans la table "assessment"
+        $assessment = new Assessment();
+        $assessment->test1 = $data['test1'];
+        $assessment->test2 = $data['test2'];
+        $assessment->test3 = $data['test3'];
+        $assessment->test4 = $data['test4'];
+        $assessment->test5 = $data['test5'];
+        $assessment->moyenne = $data['moyenne'];
+        $assessment->status = $data['status'];
+        $assessment->session = $data['selectedSession'];
+        $assessment->save();
+
+        return redirect()->back()->with('success', 'Assessment enregistré avec succès.');
+    }
+}
+```
+
+Assurez-vous de configurer correctement vos routes et modèles dans Laravel, en fonction de vos besoins.
